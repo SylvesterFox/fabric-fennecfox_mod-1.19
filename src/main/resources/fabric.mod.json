@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "fennecmod",
+  "version": "${version}",
+
+  "name": "Fennec Mod",
+  "description": "This is an example!",
+  "authors": [
+    "SylvesterNotCute"
+  ],
+  "contact": {
+    "homepage": "https://t.me/CuteBoxDragofox",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/fennecmod/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.sylvesternotcute.fennecmod.FennecMod"
+    ]
+  },
+  "mixins": [
+    "fennecmod.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.14.6",
+    "fabric": "*",
+    "minecraft": "~1.19",
+    "java": ">=17"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
