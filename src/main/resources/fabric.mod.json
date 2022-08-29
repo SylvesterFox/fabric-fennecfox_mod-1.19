@@ -10,7 +10,7 @@
   ],
   "contact": {
     "homepage": "https://t.me/CuteBoxDragofox",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "sources": "https://github.com/SylvesterFox/fabric-fennecfox_mod-1.19"
   },
 
   "license": "CC0-1.0",
@@ -20,6 +20,9 @@
   "entrypoints": {
     "main": [
       "net.sylvesternotcute.fennecmod.FennecMod"
+    ],
+    "client": [
+      "net.sylvesternotcute.fennecmod.FennecClientMod"
     ]
   },
   "mixins": [
