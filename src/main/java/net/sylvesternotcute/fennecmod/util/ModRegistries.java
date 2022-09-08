@@ -13,5 +13,6 @@ public class ModRegistries {
     private static void registerAttributes() {
         FennecMod.LOGGER.info("Set Attributes entities..");
         FabricDefaultAttributeRegistry.register(ModEntities.FENNEC, FennecEntity.setAttributes());
+        FabricDefaultAttributeRegistry.register(ModEntities.CHINESE_DRAGON, FennecEntity.setAttributes());
     }
 }
