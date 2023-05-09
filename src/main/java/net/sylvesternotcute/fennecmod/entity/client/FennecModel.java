@@ -9,9 +9,10 @@ import software.bernie.geckolib3.model.AnimatedGeoModel;
 import software.bernie.geckolib3.model.provider.data.EntityModelData;
 
 public class FennecModel extends AnimatedGeoModel<FennecEntity> {
+    public static final Identifier MODEL = new Identifier(FennecMod.MOD_ID, "geo/fennec.geo.json");
     @Override
     public Identifier getModelResource(FennecEntity object) {
-        return new Identifier(FennecMod.MOD_ID, "geo/fennec.geo.json");
+        return MODEL;
     }
 
     @Override
