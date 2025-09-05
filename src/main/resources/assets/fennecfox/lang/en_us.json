@@ -1,0 +1,13 @@
+{
+  "itemGroup.fennecfox": "Example Mod Tab",
+  "block.fennecfox.example_block": "Example Block",
+  "item.fennecfox.example_item": "Example Item",
+
+  "fennecfox.configuration.title": "fennecfox Configs",
+  "fennecfox.configuration.section.fennecfox.common.toml": "fennecfox Configs",
+  "fennecfox.configuration.section.fennecfox.common.toml.title": "fennecfox Configs",
+  "fennecfox.configuration.items": "Item List",
+  "fennecfox.configuration.logDirtBlock": "Log Dirt Block",
+  "fennecfox.configuration.magicNumberIntroduction": "Magic Number Text",
+  "fennecfox.configuration.magicNumber": "Magic Number"
+}
