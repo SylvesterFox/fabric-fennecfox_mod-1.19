@@ -12,7 +12,6 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemConvertible;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -38,6 +37,9 @@ import java.util.function.Predicate;
 public class FennecEntity extends AnimalEntity implements IAnimatable {
     static final Predicate<ItemEntity> PICKABLE_DROP_FILTER = (item) -> {return !item.cannotPickup() && item.isAlive(); };
     private AnimationFactory factory = new AnimationFactory(this);
+    public float headPitch;
+    public float headYaw;
+
 
     public FennecEntity(EntityType<? extends AnimalEntity> entityType, World world) {
         super(entityType, world);
@@ -145,10 +147,12 @@ public class FennecEntity extends AnimalEntity implements IAnimatable {
 
         public void tick() {
             List<ItemEntity> list = FennecEntity.this.world.getEntitiesByClass(ItemEntity.class, FennecEntity.this.getBoundingBox().expand(8.0, 8.0, 8.0), FennecEntity.PICKABLE_DROP_FILTER);
-            ItemStack itemStack =FennecEntity.this.getEquippedStack(EquipmentSlot.MAINHAND);
+            ItemStack itemStack = FennecEntity.this.getEquippedStack(EquipmentSlot.MAINHAND);
+
             if (itemStack.isEmpty() && !list.isEmpty()) {
-                FennecEntity.this.getNavigation().startMovingTo((Entity) list.get(0), 1.2);
+                FennecEntity.this.getNavigation().startMovingTo((Entity) list.get(0), 0.5);
             }
+
         }
 
         @Override

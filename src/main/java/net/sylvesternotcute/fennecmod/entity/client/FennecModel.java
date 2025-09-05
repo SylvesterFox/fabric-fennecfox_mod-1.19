@@ -10,6 +10,7 @@ import software.bernie.geckolib3.model.provider.data.EntityModelData;
 
 public class FennecModel extends AnimatedGeoModel<FennecEntity> {
     public static final Identifier MODEL = new Identifier(FennecMod.MOD_ID, "geo/fennec.geo.json");
+
     @Override
     public Identifier getModelResource(FennecEntity object) {
         return MODEL;
@@ -25,7 +26,7 @@ public class FennecModel extends AnimatedGeoModel<FennecEntity> {
         return new Identifier(FennecMod.MOD_ID, "animations/fennec_animation.json");
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+
     @Override
     public void setLivingAnimations(FennecEntity entity, Integer uniqueID, AnimationEvent customPredicate) {
         super.setLivingAnimations(entity, uniqueID, customPredicate);
@@ -36,5 +37,7 @@ public class FennecModel extends AnimatedGeoModel<FennecEntity> {
             head.setRotationX(extraData.headPitch * ((float) Math.PI / 180F));
             head.setRotationY(extraData.netHeadYaw * ((float) Math.PI / 180F));
         }
+        entity.headPitch = extraData.headPitch;
+        entity.headYaw = extraData.netHeadYaw;
     }
 }
