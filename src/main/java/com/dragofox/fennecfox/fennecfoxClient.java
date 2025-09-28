@@ -11,9 +11,9 @@ import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
-@Mod(value = fennecfox.MODID, dist = Dist.CLIENT)
+@Mod(value = FennecMod.MODID, dist = Dist.CLIENT)
 // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
-@EventBusSubscriber(modid = fennecfox.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = FennecMod.MODID, value = Dist.CLIENT)
 public class fennecfoxClient {
     public fennecfoxClient(ModContainer container) {
         // Allows NeoForge to create a config screen for this mod's configs.
@@ -25,7 +25,7 @@ public class fennecfoxClient {
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
         // Some client setup code
-        fennecfox.LOGGER.info("HELLO FROM CLIENT SETUP");
-        fennecfox.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+        FennecMod.LOGGER.info("HELLO FROM CLIENT SETUP");
+        FennecMod.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
     }
 }

@@ -10,7 +10,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-import static com.dragofox.fennecfox.fennecfox.MODID;
+import static com.dragofox.fennecfox.FennecMod.MODID;
 
 public class ModItems {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);

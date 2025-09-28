@@ -19,15 +19,15 @@ import static com.dragofox.fennecfox.world.items.ModItems.BLOCKS;
 import static com.dragofox.fennecfox.world.items.ModItems.ITEMS;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
-@Mod(fennecfox.MODID)
-public class fennecfox {
+@Mod(FennecMod.MODID)
+public class FennecMod {
     // Define mod id in a common place for everything to reference
-    public static final String MODID = "fennecfox";
+    public static final String MODID = "fennecmod";
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
 
 
-    public fennecfox(IEventBus modEventBus, ModContainer modContainer) {
+    public FennecMod(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 

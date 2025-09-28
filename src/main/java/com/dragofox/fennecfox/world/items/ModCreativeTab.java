@@ -9,7 +9,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 
-import static com.dragofox.fennecfox.fennecfox.MODID;
+import static com.dragofox.fennecfox.FennecMod.MODID;
 import static com.dragofox.fennecfox.world.items.ModItems.EXAMPLE_BLOCK_ITEM;
 import static com.dragofox.fennecfox.world.items.ModItems.EXAMPLE_ITEM;
 
