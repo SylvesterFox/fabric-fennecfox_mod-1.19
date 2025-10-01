@@ -1,19 +1,17 @@
 {
 	"format_version": "1.8.0",
 	"animations": {
-		"animation.fennec.idle": {
+		"misc.idle": {
 			"loop": true,
 			"bones": {
 				"tail": {
-					"rotation": {
-						"vector": ["math.sin(query.anim_time*150)*20", 0, 0]
-					}
+					"rotation": ["math.sin(query.anim_time*150)*20", 0, 0]
 				}
 			}
 		},
-		"animation.fennec.walk": {
+		"move.walk": {
 			"loop": true,
-			"animation_length": 0.29167,
+			"animation_length": 0.25,
 			"bones": {
 				"leg_right_0": {
 					"rotation": {
@@ -45,6 +43,5 @@
 				}
 			}
 		}
-	},
-	"geckolib_format_version": 2
+	}
 }

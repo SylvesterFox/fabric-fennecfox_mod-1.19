@@ -42,9 +42,6 @@ public class FennecEntity extends Animal implements GeoEntity {
         super(type, level);
     }
 
-    public float headPatch;
-    public float headYaw;
-
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
@@ -56,6 +53,7 @@ public class FennecEntity extends Animal implements GeoEntity {
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 
         this.goalSelector.addGoal(7, new FennecSleepGoal(this));
+        super.registerGoals();
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -83,7 +81,7 @@ public class FennecEntity extends Animal implements GeoEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>("Walk/Run/Idle", state -> {
+        controllers.add(new AnimationController<>("Walk/Run/Idle", 24,  state -> {
             if (state.isMoving())
                 return state.setAndContinue(FennecEntity.this.isSprinting() ? DefaultAnimations.RUN : DefaultAnimations.WALK);
             return state.setAndContinue(DefaultAnimations.IDLE);

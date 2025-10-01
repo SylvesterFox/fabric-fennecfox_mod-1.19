@@ -2,7 +2,7 @@ package com.dragofox.fennecfox.world.entity.custom;
 
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import software.bernie.geckolib.constant.dataticket.DataTicket;
+//import software.bernie.geckolib.constant.dataticket.DataTicket;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.renderer.base.GeoRenderState;
 

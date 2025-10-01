@@ -11,7 +11,8 @@ import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.base.GeoRenderState;
 
 public class FennecModel extends GeoModel<FennecEntity> {
-    public static final ResourceLocation MODEL = ResourceLocation.fromNamespaceAndPath(FennecMod.MODID, "geo/fennec");
+    private final ResourceLocation MODEL = ResourceLocation.fromNamespaceAndPath(FennecMod.MODID, "geo/fennec");
+    private final ResourceLocation animations = ResourceLocation.fromNamespaceAndPath(FennecMod.MODID, "entity/fennec");
 
     @Override
     public ResourceLocation getModelResource(GeoRenderState renderState) {
@@ -25,7 +26,7 @@ public class FennecModel extends GeoModel<FennecEntity> {
 
     @Override
     public ResourceLocation getAnimationResource(FennecEntity animatable) {
-        return ResourceLocation.fromNamespaceAndPath(FennecMod.MODID, "animations/fennec_animation.json");
+        return animations;
     }
 
     @Override
