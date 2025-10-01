@@ -12,6 +12,9 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.Fox;
@@ -22,12 +25,18 @@ import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.manager.AnimatableManager;
+import software.bernie.geckolib.animatable.processing.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.constant.DefaultAnimations;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.List;
 
 public class FennecEntity extends Animal implements GeoEntity {
 
     public static final EntityDataAccessor<Boolean> SLEEPING = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.BOOLEAN);
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     public FennecEntity(EntityType<? extends Animal> type, Level level) {
         super(type, level);
@@ -49,6 +58,14 @@ public class FennecEntity extends Animal implements GeoEntity {
         this.goalSelector.addGoal(7, new FennecSleepGoal(this));
     }
 
+    public static AttributeSupplier.Builder createAttributes() {
+        return Animal.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 10.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.2)
+                .add(Attributes.FOLLOW_RANGE, 16.0)
+                .add(Attributes.ATTACK_DAMAGE, 2.0);
+    }
+
     @Override
     public boolean isFood(ItemStack itemStack) {
         return false;
@@ -60,8 +77,17 @@ public class FennecEntity extends Animal implements GeoEntity {
     }
 
     @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return cache;
+    }
 
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>("Walk/Run/Idle", state -> {
+            if (state.isMoving())
+                return state.setAndContinue(FennecEntity.this.isSprinting() ? DefaultAnimations.RUN : DefaultAnimations.WALK);
+            return state.setAndContinue(DefaultAnimations.IDLE);
+        }));
     }
 
     @Override
@@ -70,10 +96,6 @@ public class FennecEntity extends Animal implements GeoEntity {
         builder.define(SLEEPING, false);
     }
 
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return null;
-    }
 
     @Nullable
     @Override

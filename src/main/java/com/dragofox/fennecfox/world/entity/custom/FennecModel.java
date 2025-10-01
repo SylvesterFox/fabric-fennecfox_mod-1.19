@@ -11,7 +11,7 @@ import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.base.GeoRenderState;
 
 public class FennecModel extends GeoModel<FennecEntity> {
-    public static final ResourceLocation MODEL = ResourceLocation.fromNamespaceAndPath(FennecMod.MODID, "geo/fennec.geo.json");
+    public static final ResourceLocation MODEL = ResourceLocation.fromNamespaceAndPath(FennecMod.MODID, "geo/fennec");
 
     @Override
     public ResourceLocation getModelResource(GeoRenderState renderState) {
@@ -20,7 +20,7 @@ public class FennecModel extends GeoModel<FennecEntity> {
 
     @Override
     public ResourceLocation getTextureResource(GeoRenderState renderState) {
-        return ResourceLocation.fromNamespaceAndPath(FennecMod.MODID, "textures/entity/fennec/texture_fennec.png");
+        return ResourceLocation.fromNamespaceAndPath(FennecMod.MODID, "textures/fennec/texture_fennec_fox.png");
     }
 
     @Override
@@ -32,9 +32,7 @@ public class FennecModel extends GeoModel<FennecEntity> {
     public void setCustomAnimations(AnimationState<FennecEntity> animationState) {
         super.setCustomAnimations(animationState);
         GeoBone head = this.getAnimationProcessor().getBone("head");
-        FennecEntity entity = animationState.getAnimatable();
         if (head != null) {
-            // Используем новые DataTickets
             Float headPitch = animationState.getData(DataTickets.ENTITY_PITCH);
             Float headYaw = animationState.getData(DataTickets.ENTITY_YAW);
             if (headPitch != null) {

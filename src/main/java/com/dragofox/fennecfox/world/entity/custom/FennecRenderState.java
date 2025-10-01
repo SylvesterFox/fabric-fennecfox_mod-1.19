@@ -1,5 +1,6 @@
 package com.dragofox.fennecfox.world.entity.custom;
 
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.constant.dataticket.DataTicket;
@@ -7,7 +8,12 @@ import software.bernie.geckolib.renderer.base.GeoRenderState;
 
 import java.util.Map;
 
-public class FennecRenderState extends LivingEntityRenderState implements GeoRenderState {
+
+public class FennecRenderState extends EntityRenderState implements GeoRenderState {
+    public FennecEntity entity;
+    public float headPitch;
+    public float headYaw;
+
     @Override
     public <D> void addGeckolibData(DataTicket<D> dataTicket, @Nullable D data) {
 
@@ -27,7 +33,4 @@ public class FennecRenderState extends LivingEntityRenderState implements GeoRen
     public Map<DataTicket<?>, Object> getDataMap() {
         return Map.of();
     }
-    // You can add custom fields here if needed
-    // public boolean isCustomState;
-    // public float customValue;
 }

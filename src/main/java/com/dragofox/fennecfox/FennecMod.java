@@ -1,6 +1,11 @@
 package com.dragofox.fennecfox;
 
+import com.dragofox.fennecfox.world.entity.MobEntites;
+import com.dragofox.fennecfox.world.entity.custom.FennecEntity;
+import com.dragofox.fennecfox.world.entity.custom.FennecRenderer;
 import com.dragofox.fennecfox.world.items.ModCreativeTab;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -14,6 +19,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
+import static com.dragofox.fennecfox.world.entity.MobEntites.ENTITIES;
 import static com.dragofox.fennecfox.world.items.ModCreativeTab.CREATIVE_MODE_TABS;
 import static com.dragofox.fennecfox.world.items.ModItems.BLOCKS;
 import static com.dragofox.fennecfox.world.items.ModItems.ITEMS;
@@ -22,13 +28,11 @@ import static com.dragofox.fennecfox.world.items.ModItems.ITEMS;
 @Mod(FennecMod.MODID)
 public class FennecMod {
     // Define mod id in a common place for everything to reference
-    public static final String MODID = "fennecmod";
-    // Directly reference a slf4j logger
+    public static final String MODID = "fennecfox";
     public static final Logger LOGGER = LogUtils.getLogger();
 
 
     public FennecMod(IEventBus modEventBus, ModContainer modContainer) {
-        // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 
         // Register the Deferred Register to the mod event bus so blocks get registered
@@ -37,12 +41,14 @@ public class FennecMod {
         ITEMS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
+        ENTITIES.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (fennecfox) to respond directly to events.
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
         NeoForge.EVENT_BUS.register(this);
-
+        modEventBus.addListener(this::registerAttributes);
+        modEventBus.addListener(this::onRegisterRenderers);
         // Register the item to a creative tab
         modEventBus.addListener(ModCreativeTab::addCreative);
 
@@ -54,6 +60,15 @@ public class FennecMod {
         // Some common setup code
         LOGGER.info("HELLO FROM COMMON SETUP");
 
+    }
+
+
+    public void registerAttributes(EntityAttributeCreationEvent event) {
+        event.put(MobEntites.FENNEC_ENTITY.get(), FennecEntity.createAttributes().build());
+    }
+
+    public void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(MobEntites.FENNEC_ENTITY.get(), FennecRenderer::new);
     }
 
 
