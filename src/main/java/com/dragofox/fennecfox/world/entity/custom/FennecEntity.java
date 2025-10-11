@@ -40,6 +40,7 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -66,6 +67,7 @@ public class FennecEntity extends Animal implements GeoEntity {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new FennecSleepGoal(this));
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.20D));
         this.goalSelector.addGoal(2, new BreedGoal(this, 1.1D));
         this.goalSelector.addGoal(3, new FollowParentGoal(this, 1.1D));
@@ -73,7 +75,7 @@ public class FennecEntity extends Animal implements GeoEntity {
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 6.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 
-        this.goalSelector.addGoal(7, new FennecSleepGoal(this));
+
         super.registerGoals();
     }
 
@@ -183,16 +185,34 @@ public class FennecEntity extends Animal implements GeoEntity {
         }
     }
 
-    public static class FennecSleepGoal extends Goal {
+    class FennecSleepGoal extends FennecBehaviorGoal {
         private final FennecEntity fennec;
+        private static final int WAIT_TIME_BEFORE_SLEEP = reducedTickDelay(140);
+        private int countdown;
 
         public FennecSleepGoal(FennecEntity fennec) {
             this.fennec = fennec;
+            this.countdown = fennec.random.nextInt(WAIT_TIME_BEFORE_SLEEP);
+            this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
         }
 
         @Override
         public boolean canUse() {
-            return !this.fennec.isInWater() && this.fennec.onGround() && !this.fennec.isAggressive();
+            return fennec.xxa == 0.0F && fennec.yya == 0.0F && fennec.zza == 0.0F && (this.canSleep() || fennec.isSleeping());
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return this.canSleep();
+        }
+
+        private boolean canSleep() {
+            if (this.countdown > 0) {
+                --this.countdown;
+                return false;
+            } else {
+                return fennec.level().isBrightOutside() && this.hasShelter() && !this.alertable() && !fennec.isInPowderSnow;
+            }
         }
 
         @Override
@@ -200,11 +220,13 @@ public class FennecEntity extends Animal implements GeoEntity {
             this.fennec.getNavigation().stop();
             this.fennec.getMoveControl().setWantedPosition(this.fennec.getX(), this.fennec.getY(), this.fennec.getZ(), (double) 0.0F);
             this.fennec.setSleeping(true);
+            this.fennec.setSitting(false);
         }
 
         @Override
         public void stop() {
-            fennec.setSleeping(false);
+            this.countdown = fennec.random.nextInt(WAIT_TIME_BEFORE_SLEEP);
+            fennec.clearStates();
 
         }
     }
