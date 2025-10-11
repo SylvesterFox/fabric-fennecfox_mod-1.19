@@ -10,8 +10,9 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 
 import static com.dragofox.fennecfox.FennecMod.MODID;
-import static com.dragofox.fennecfox.world.items.ModItems.EXAMPLE_BLOCK_ITEM;
 import static com.dragofox.fennecfox.world.items.ModItems.EXAMPLE_ITEM;
+import static com.dragofox.fennecfox.world.items.ModItems.FENNEC_SPAWN_EGG;
+
 
 public class ModCreativeTab {
 
@@ -22,12 +23,13 @@ public class ModCreativeTab {
             .withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
             .icon(() -> EXAMPLE_ITEM.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
-                output.accept(EXAMPLE_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
+                output.accept(EXAMPLE_ITEM.get());
+                output.accept(FENNEC_SPAWN_EGG.get());
             }).build());
 
     public static void addCreative(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
-            event.accept(EXAMPLE_BLOCK_ITEM);
+        if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
+            event.accept(FENNEC_SPAWN_EGG.get());
         }
     }
 }

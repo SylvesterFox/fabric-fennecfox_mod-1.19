@@ -194,7 +194,7 @@ public class FennecEntity extends Animal implements GeoEntity {
             this.entityData.set(DATA_TRUSTED_ID_0, Optional.of(entityReference));
         }
     }
-    
+
     class FennecSleepGoal extends FennecBehaviorGoal {
         private final FennecEntity fennec;
         private static final int WAIT_TIME_BEFORE_SLEEP = reducedTickDelay(140);

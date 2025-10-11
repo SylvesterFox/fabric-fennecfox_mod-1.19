@@ -34,15 +34,12 @@ public class FennecMod {
 
     public FennecMod(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(this::commonSetup);
-
+        ENTITIES.register(modEventBus);
         // Register the Deferred Register to the mod event bus so blocks get registered
         BLOCKS.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so items get registered
-        ITEMS.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so tabs get registered
-        CREATIVE_MODE_TABS.register(modEventBus);
-        ENTITIES.register(modEventBus);
 
+        ITEMS.register(modEventBus);
+        CREATIVE_MODE_TABS.register(modEventBus);
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (fennecfox) to respond directly to events.
         // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
@@ -70,6 +67,8 @@ public class FennecMod {
     public void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(MobEntites.FENNEC_ENTITY.get(), FennecRenderer::new);
     }
+
+
 
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
