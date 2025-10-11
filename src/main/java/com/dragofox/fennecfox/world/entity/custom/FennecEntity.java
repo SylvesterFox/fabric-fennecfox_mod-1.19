@@ -1,26 +1,35 @@
 package com.dragofox.fennecfox.world.entity.custom;
 
+import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.stats.Stats;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.AgeableMob;
-import net.minecraft.world.entity.EntitySelector;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Fox;
+import net.minecraft.world.entity.animal.Rabbit;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.BabyEntitySpawnEvent;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
@@ -32,14 +41,26 @@ import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public class FennecEntity extends Animal implements GeoEntity {
 
     public static final EntityDataAccessor<Boolean> SLEEPING = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> SITTING = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Optional<EntityReference<LivingEntity>>> DATA_TRUSTED_ID_0 = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.OPTIONAL_LIVING_ENTITY_REFERENCE);
+    public static final EntityDataAccessor<Optional<EntityReference<LivingEntity>>> DATA_TRUSTED_ID_1 = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.OPTIONAL_LIVING_ENTITY_REFERENCE);
+
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     public FennecEntity(EntityType<? extends Animal> type, Level level) {
         super(type, level);
+    }
+
+    void clearStates() {
+        this.setSleeping(false);
+        this.setSitting(false);
     }
 
     @Override
@@ -59,7 +80,7 @@ public class FennecEntity extends Animal implements GeoEntity {
     public static AttributeSupplier.Builder createAttributes() {
         return Animal.createAnimalAttributes()
                 .add(Attributes.MAX_HEALTH, 10.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.2)
+                .add(Attributes.MOVEMENT_SPEED, 0.4)
                 .add(Attributes.FOLLOW_RANGE, 16.0)
                 .add(Attributes.ATTACK_DAMAGE, 2.0);
     }
@@ -84,6 +105,8 @@ public class FennecEntity extends Animal implements GeoEntity {
         controllers.add(new AnimationController<>("Walk/Run/Idle", 24,  state -> {
             if (state.isMoving())
                 return state.setAndContinue(FennecEntity.this.isSprinting() ? DefaultAnimations.RUN : DefaultAnimations.WALK);
+            if (this.isSleeping())
+                return state.setAndContinue(RawAnimation.begin().thenLoop("misc.sleep"));
             return state.setAndContinue(DefaultAnimations.IDLE);
         }));
     }
@@ -92,6 +115,9 @@ public class FennecEntity extends Animal implements GeoEntity {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(SLEEPING, false);
+        builder.define(SITTING, false);
+        builder.define(DATA_TRUSTED_ID_0, Optional.empty());
+        builder.define(DATA_TRUSTED_ID_1, Optional.empty());
     }
 
 
@@ -123,11 +149,38 @@ public class FennecEntity extends Animal implements GeoEntity {
         }
     }
 
+    boolean trusts(LivingEntity entity) {
+        return this.getTrustedEntities().anyMatch((EntityReference<LivingEntity> livingEntityEntityReference) -> livingEntityEntityReference.matches(entity));
+    }
+
     @Override
     public boolean isSleeping() {return this.entityData.get(SLEEPING);}
 
     public void setSleeping(boolean sleeping) {
         this.entityData.set(SLEEPING, sleeping);
+    }
+
+
+    public boolean isSitting() {return  this.entityData.get(SITTING);};
+
+    public void setSitting(boolean sitting) {
+        this.entityData.set(SITTING, sitting);
+    }
+
+    Stream<EntityReference<LivingEntity>> getTrustedEntities() {
+        return Stream.concat(((Optional)this.entityData.get(DATA_TRUSTED_ID_0)).stream(), ((Optional)this.entityData.get(DATA_TRUSTED_ID_1)).stream());
+    }
+
+    void addTrustedEntity(LivingEntity entity) {
+        this.addTrustedEntity(new EntityReference(entity));
+    }
+
+    private void addTrustedEntity(EntityReference<LivingEntity> entityReference) {
+        if (((Optional)this.entityData.get(DATA_TRUSTED_ID_0)).isPresent()) {
+            this.entityData.set(DATA_TRUSTED_ID_1, Optional.of(entityReference));
+        } else {
+            this.entityData.set(DATA_TRUSTED_ID_0, Optional.of(entityReference));
+        }
     }
 
     public static class FennecSleepGoal extends Goal {
@@ -144,12 +197,116 @@ public class FennecEntity extends Animal implements GeoEntity {
 
         @Override
         public void start() {
+            this.fennec.getNavigation().stop();
+            this.fennec.getMoveControl().setWantedPosition(this.fennec.getX(), this.fennec.getY(), this.fennec.getZ(), (double) 0.0F);
             this.fennec.setSleeping(true);
         }
 
         @Override
         public void stop() {
             fennec.setSleeping(false);
+
+        }
+    }
+
+    public class FennecAlertableEntitesSelector implements TargetingConditions.Selector {
+        public boolean test(LivingEntity livingEntity, ServerLevel serverLevel) {
+            if (livingEntity instanceof FennecEntity) {
+                return false;
+            } else if (!(livingEntity instanceof Chicken) && !(livingEntity instanceof Rabbit) && !(livingEntity instanceof Monster)) {
+                if (livingEntity instanceof TamableAnimal) {
+                    return !((TamableAnimal)livingEntity).isTame();
+                } else {
+                    if (livingEntity instanceof  Player) {
+                        Player player = (Player)livingEntity;
+                        if (player.isSpectator() || player.isCreative()) {
+                            return false;
+                        }
+                    }
+
+                    return FennecEntity.this.trusts(livingEntity) ? false : !livingEntity.isSleeping() && !livingEntity.isDiscrete();
+                }
+            } else {
+                return true;
+            }
+        }
+    }
+
+    abstract class FennecBehaviorGoal extends Goal {
+        private final TargetingConditions alertableTargeting;
+
+        FennecBehaviorGoal() {
+            TargetingConditions target = TargetingConditions.forCombat().range((double) 12.0F).ignoreLineOfSight();
+            FennecEntity fennec = FennecEntity.this;
+            Objects.requireNonNull(fennec);
+            this.alertableTargeting = target.selector(fennec.new FennecAlertableEntitesSelector());
+        }
+
+        protected boolean hasShelter() {
+            BlockPos blockPos = BlockPos.containing(FennecEntity.this.getX(), FennecEntity.this.getBoundingBox().maxY, FennecEntity.this.getZ());
+            return !FennecEntity.this.level().canSeeSky(blockPos) && FennecEntity.this.getWalkTargetValue(blockPos) >= 0.0F;
+        }
+
+        protected boolean alertable() {
+            return !getServerLevel(FennecEntity.this.level()).getNearbyEntities(LivingEntity.class, this.alertableTargeting, FennecEntity.this, FennecEntity.this.getBoundingBox().inflate((double) 12.0F, (double) 6.0F, (double) 12.0F)).isEmpty();
+        }
+    }
+
+    class FennecBreedGoal extends BreedGoal {
+        public FennecBreedGoal(double speedModifier) { super(FennecEntity.this, speedModifier);}
+
+        public void start() {
+            ((FennecEntity)this.animal).clearStates();
+            ((FennecEntity)this.partner).clearStates();
+            super.start();
+        }
+
+        @Override
+        protected void breed() {
+            super.breed();
+            ServerLevel serverLevel = this.level;
+            FennecEntity fennec = (FennecEntity) this.animal.getBreedOffspring(serverLevel, this.partner);
+            BabyEntitySpawnEvent event = new BabyEntitySpawnEvent(this.animal, this.partner, fennec);
+            boolean cancelled = ((BabyEntitySpawnEvent) NeoForge.EVENT_BUS.post(event)).isCanceled();
+            fennec = (FennecEntity) event.getChild();
+            if (cancelled) {
+                this.animal.setAge(6000);
+                this.partner.setAge(6000);
+                this.animal.resetLove();
+                this.partner.resetLove();
+            } else {
+                if (fennec != null) {
+                    ServerPlayer serverplayer = this.animal.getLoveCause();
+                    ServerPlayer serverplayer1 = this.partner.getLoveCause();
+                    ServerPlayer serverplayer2 = serverplayer;
+
+                    if (serverplayer != null) {
+                        fennec.addTrustedEntity(serverplayer);
+                    } else {
+                        serverplayer2 = serverplayer1;
+                    }
+
+                    if (serverplayer1 != null && serverplayer != serverplayer1) {
+                        fennec.addTrustedEntity(serverplayer1);
+                    }
+
+                    if (serverplayer2 != null) {
+                        serverplayer2.awardStat(Stats.ANIMALS_BRED);
+                        CriteriaTriggers.BRED_ANIMALS.trigger(serverplayer2, this.animal, this.partner, fennec);
+                    }
+
+                    this.animal.setAge(6000);
+                    this.partner.setAge(6000);
+                    this.animal.resetLove();
+                    this.partner.resetLove();
+                    fennec.setAge(-24000);
+                    serverLevel.addFreshEntityWithPassengers(fennec);
+                    this.level.broadcastEntityEvent(this.animal, (byte) 18);
+                    if (serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
+                        this.level.addFreshEntity(new ExperienceOrb(this.level, this.animal.getX(), this.animal.getY(), this.animal.getZ(), this.animal.getRandom().nextInt(7) + 1));
+                    }
+                }
+            }
         }
     }
 

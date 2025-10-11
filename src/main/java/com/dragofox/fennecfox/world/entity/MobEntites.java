@@ -24,7 +24,7 @@ public class MobEntites {
                             FennecEntity::new,
                             MobCategory.CREATURE
                         )
-                            .sized(0.9f, 0.7f)
+                            .sized(0.5f, 0.6f)
                             .build(ResourceKey.create(
                                     Registries.ENTITY_TYPE,
                                     ResourceLocation.fromNamespaceAndPath("fennecmod", "fennec")
