@@ -23,6 +23,7 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Fox;
 import net.minecraft.world.entity.animal.Rabbit;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -44,25 +45,32 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class FennecEntity extends Animal implements GeoEntity {
-
     public static final EntityDataAccessor<Boolean> SLEEPING = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> SITTING = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Optional<EntityReference<LivingEntity>>> DATA_TRUSTED_ID_0 = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.OPTIONAL_LIVING_ENTITY_REFERENCE);
     public static final EntityDataAccessor<Optional<EntityReference<LivingEntity>>> DATA_TRUSTED_ID_1 = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.OPTIONAL_LIVING_ENTITY_REFERENCE);
     public static final EntityDataAccessor<Boolean> POUNCING = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Boolean> FACEPLANTED = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.BOOLEAN);
+    static final Predicate<ItemEntity> ALLOWED_ITEMS = (item) -> !item.hasPickUpDelay() && item.isAlive();
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     public FennecEntity(EntityType<? extends Animal> type, Level level) {
         super(type, level);
+        this.setCanPickUpLoot(true);
     }
 
     void clearStates() {
         this.setSleeping(false);
         this.setSitting(false);
+    }
+
+    boolean canMove() {
+        return !this.isSleeping() && !this.isSitting() && !this.isFaceplanted();
     }
 
     @Override
@@ -76,6 +84,7 @@ public class FennecEntity extends Animal implements GeoEntity {
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(7, new FennecSleepGoal(this));
         this.goalSelector.addGoal(8, new PerchAndSearchGoal());
+        this.goalSelector.addGoal(9, new FennecSearchForItemsGoal());
 
         super.registerGoals();
     }
@@ -124,6 +133,7 @@ public class FennecEntity extends Animal implements GeoEntity {
         builder.define(DATA_TRUSTED_ID_0, Optional.empty());
         builder.define(DATA_TRUSTED_ID_1, Optional.empty());
         builder.define(POUNCING, false);
+        builder.define(FACEPLANTED, false);
     }
 
 
@@ -179,6 +189,12 @@ public class FennecEntity extends Animal implements GeoEntity {
 
     public void setIsPouncing(boolean isPouncing) { this.entityData.set(POUNCING, isPouncing); }
 
+    public boolean isFaceplanted() {
+        return this.entityData.get(FACEPLANTED);
+    }
+
+    void setFaceplanted(boolean faceplanted) { this.entityData.set(FACEPLANTED, faceplanted); }
+
     Stream<EntityReference<LivingEntity>> getTrustedEntities() {
         return Stream.concat(((Optional)this.entityData.get(DATA_TRUSTED_ID_0)).stream(), ((Optional)this.entityData.get(DATA_TRUSTED_ID_1)).stream());
     }
@@ -192,6 +208,47 @@ public class FennecEntity extends Animal implements GeoEntity {
             this.entityData.set(DATA_TRUSTED_ID_1, Optional.of(entityReference));
         } else {
             this.entityData.set(DATA_TRUSTED_ID_0, Optional.of(entityReference));
+        }
+    }
+
+    class FennecSearchForItemsGoal extends Goal {
+        public FennecSearchForItemsGoal() {
+            this.setFlags(EnumSet.of(Flag.MOVE));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!FennecEntity.this.getItemBySlot(EquipmentSlot.MAINHAND).isEmpty()) {
+                return false;
+            }  else if (FennecEntity.this.getTarget() == null && FennecEntity.this.getLastHurtByMob() == null) {
+                if (!FennecEntity.this.canMove()) {
+                    return false;
+                } else if (FennecEntity.this.getRandom().nextInt(reducedTickDelay(10)) != 0) {
+                    return false;
+                } else {
+                    List<ItemEntity> list = FennecEntity.this.level().getEntitiesOfClass(ItemEntity.class, FennecEntity.this.getBoundingBox().inflate((double) 8.0F, (double) 8.0F, (double) 8.0F), FennecEntity.ALLOWED_ITEMS);
+                    return !list.isEmpty() && FennecEntity.this.getItemBySlot(EquipmentSlot.MAINHAND).isEmpty();
+                }
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public void tick() {
+            List<ItemEntity> list = FennecEntity.this.level().getEntitiesOfClass(ItemEntity.class, FennecEntity.this.getBoundingBox().inflate((double) 8.0F, (double) 8.0F, (double) 8.0F), FennecEntity.ALLOWED_ITEMS);
+            ItemStack itemStack = FennecEntity.this.getItemBySlot(EquipmentSlot.MAINHAND);
+            if (itemStack.isEmpty() && !list.isEmpty()) {
+                FennecEntity.this.getNavigation().moveTo((Entity) list.get(0), (double) 1.2F);
+            }
+        }
+
+        @Override
+        public void start() {
+            List<ItemEntity> list = FennecEntity.this.level().getEntitiesOfClass(ItemEntity.class, FennecEntity.this.getBoundingBox().inflate((double) 8.0F, (double) 8.0F, (double) 8.0F), FennecEntity.ALLOWED_ITEMS);
+            if (!list.isEmpty()) {
+                FennecEntity.this.getNavigation().moveTo((Entity)list.get(0), (double) 1.2F);
+            }
         }
     }
 
@@ -389,8 +446,5 @@ public class FennecEntity extends Animal implements GeoEntity {
             }
         }
     }
-
-
-
-
+    
 }
