@@ -52,6 +52,7 @@ public class FennecEntity extends Animal implements GeoEntity {
     public static final EntityDataAccessor<Boolean> SITTING = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Optional<EntityReference<LivingEntity>>> DATA_TRUSTED_ID_0 = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.OPTIONAL_LIVING_ENTITY_REFERENCE);
     public static final EntityDataAccessor<Optional<EntityReference<LivingEntity>>> DATA_TRUSTED_ID_1 = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.OPTIONAL_LIVING_ENTITY_REFERENCE);
+    public static final EntityDataAccessor<Boolean> POUNCING = SynchedEntityData.defineId(FennecEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
@@ -67,14 +68,14 @@ public class FennecEntity extends Animal implements GeoEntity {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new FennecSleepGoal(this));
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.20D));
         this.goalSelector.addGoal(2, new BreedGoal(this, 1.1D));
         this.goalSelector.addGoal(3, new FollowParentGoal(this, 1.1D));
         this.goalSelector.addGoal(4, new RandomStrollGoal(this, 1.1D));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 6.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
-
+        this.goalSelector.addGoal(7, new FennecSleepGoal(this));
+        this.goalSelector.addGoal(8, new PerchAndSearchGoal());
 
         super.registerGoals();
     }
@@ -109,6 +110,8 @@ public class FennecEntity extends Animal implements GeoEntity {
                 return state.setAndContinue(FennecEntity.this.isSprinting() ? DefaultAnimations.RUN : DefaultAnimations.WALK);
             if (this.isSleeping())
                 return state.setAndContinue(RawAnimation.begin().thenLoop("misc.sleep"));
+            if (this.isSitting())
+                return state.setAndContinue(RawAnimation.begin().thenLoop("misc.sit"));
             return state.setAndContinue(DefaultAnimations.IDLE);
         }));
     }
@@ -120,6 +123,7 @@ public class FennecEntity extends Animal implements GeoEntity {
         builder.define(SITTING, false);
         builder.define(DATA_TRUSTED_ID_0, Optional.empty());
         builder.define(DATA_TRUSTED_ID_1, Optional.empty());
+        builder.define(POUNCING, false);
     }
 
 
@@ -169,6 +173,12 @@ public class FennecEntity extends Animal implements GeoEntity {
         this.entityData.set(SITTING, sitting);
     }
 
+    public boolean isPouncing() {
+        return this.entityData.get(POUNCING);
+    }
+
+    public void setIsPouncing(boolean isPouncing) { this.entityData.set(POUNCING, isPouncing); }
+
     Stream<EntityReference<LivingEntity>> getTrustedEntities() {
         return Stream.concat(((Optional)this.entityData.get(DATA_TRUSTED_ID_0)).stream(), ((Optional)this.entityData.get(DATA_TRUSTED_ID_1)).stream());
     }
@@ -184,7 +194,7 @@ public class FennecEntity extends Animal implements GeoEntity {
             this.entityData.set(DATA_TRUSTED_ID_0, Optional.of(entityReference));
         }
     }
-
+    
     class FennecSleepGoal extends FennecBehaviorGoal {
         private final FennecEntity fennec;
         private static final int WAIT_TIME_BEFORE_SLEEP = reducedTickDelay(140);
@@ -271,6 +281,54 @@ public class FennecEntity extends Animal implements GeoEntity {
 
         protected boolean alertable() {
             return !getServerLevel(FennecEntity.this.level()).getNearbyEntities(LivingEntity.class, this.alertableTargeting, FennecEntity.this, FennecEntity.this.getBoundingBox().inflate((double) 12.0F, (double) 6.0F, (double) 12.0F)).isEmpty();
+        }
+    }
+
+    class PerchAndSearchGoal extends FennecBehaviorGoal {
+        private double relX;
+        private double relZ;
+        private int lookTime;
+        private int looksRemaining;
+
+        public PerchAndSearchGoal() {
+            this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            return FennecEntity.this.getLastHurtByMob() == null && FennecEntity.this.getRandom().nextFloat() < 0.02F && !FennecEntity.this.isSleeping() && FennecEntity.this.getTarget() == null && FennecEntity.this.getNavigation().isDone() && !this.alertable() && !FennecEntity.this.isPouncing() && !FennecEntity.this.isCrouching();
+        }
+
+        public boolean canContinueToUse() { return this.looksRemaining > 0; }
+
+        public void start() {
+            this.resetLook();
+            this.looksRemaining = 2 + FennecEntity.this.getRandom().nextInt(3);
+            FennecEntity.this.setSitting(true);
+            FennecEntity.this.getNavigation().stop();
+        }
+
+        @Override
+        public void stop() {
+            FennecEntity.this.setSitting(false);
+        }
+
+        @Override
+        public void tick() {
+            --this.lookTime;
+            if (this.lookTime <= 0) {
+                --this.looksRemaining;
+                this.resetLook();
+            }
+
+            FennecEntity.this.getLookControl().setLookAt(FennecEntity.this.getX() + this.relX, FennecEntity.this.getEyeY(), FennecEntity.this.getZ() + this.relZ, (float) FennecEntity.this.getMaxHeadYRot(), (float) FennecEntity.this.getMaxHeadXRot());
+        }
+
+        private void resetLook() {
+            double d0 = (Math.PI * 2D) * FennecEntity.this.getRandom().nextDouble();
+            this.relX = Math.cos(d0);
+            this.relZ = Math.sin(d0);
+            this.lookTime = this.adjustedTickDelay(80 + FennecEntity.this.getRandom().nextInt(20));
         }
     }
 
